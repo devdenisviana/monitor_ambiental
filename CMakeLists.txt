@@ -38,7 +38,12 @@ pico_sdk_init()
 add_executable(MonitorAmbiental 
     MonitorAmbiental.c 
     ssd1306.c
+    bh1750.c
+    led_matrix.c
 )
+
+# Generate PIO header
+pico_generate_pio_header(MonitorAmbiental ${CMAKE_CURRENT_LIST_DIR}/ws2812.pio)
 
 pico_set_program_name(MonitorAmbiental "MonitorAmbiental")
 pico_set_program_version(MonitorAmbiental "0.1")
@@ -59,6 +64,7 @@ target_include_directories(MonitorAmbiental PRIVATE
 # Add any user requested libraries
 target_link_libraries(MonitorAmbiental 
         hardware_i2c
+        hardware_pio
         )
 
 pico_add_extra_outputs(MonitorAmbiental)
