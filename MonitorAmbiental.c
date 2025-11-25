@@ -19,6 +19,13 @@
 // GPIO para matriz de LEDs 5x5
 #define LED_MATRIX_PIN 7
 
+// Botões da BitDogLab
+#define BTN_A 5
+#define BTN_B 6
+
+// Variável global para controlar estado da matriz de LEDs
+volatile bool led_matrix_enabled = true;
+
 // Função para escanear dispositivos I2C
 void i2c_scan(i2c_inst_t *i2c, const char *bus_name) {
     printf("\n=== Scanner I2C - %s ===\n", bus_name);
@@ -53,6 +60,17 @@ int main()
     printf("    MONITOR AMBIENTAL - INICIANDO\n");
     printf("========================================\n");
     sleep_ms(3000);
+
+    // Inicialização dos botões
+    printf("\n[INFO] Inicializando botoes...\n");
+    gpio_init(BTN_A);
+    gpio_set_dir(BTN_A, GPIO_IN);
+    gpio_pull_up(BTN_A);
+    
+    gpio_init(BTN_B);
+    gpio_set_dir(BTN_B, GPIO_IN);
+    gpio_pull_up(BTN_B);
+    printf("[OK] Botoes A e B inicializados\n");
 
     printf("\n[INFO] Inicializando I2C0 (GP4/GP5)...\n");
     // Inicialização do I2C0 para o sensor BH1750
@@ -117,18 +135,45 @@ int main()
 
     // Loop principal - Exibe as leituras do sensor
     while (true) {
+        // Verifica botão A (desativa matriz de LEDs)
+        if (gpio_get(BTN_A) == 0) {  // Botão pressionado (pull-up, então 0 = pressionado)
+            if (led_matrix_enabled) {
+                led_matrix_enabled = false;
+                led_matrix_clear(&led_matrix);
+                printf("[BTN A] Matriz de LEDs DESATIVADA\n");
+                sleep_ms(300);  // Debounce
+            }
+        }
+        
+        // Verifica botão B (ativa matriz de LEDs)
+        if (gpio_get(BTN_B) == 0) {  // Botão pressionado
+            if (!led_matrix_enabled) {
+                led_matrix_enabled = true;
+                printf("[BTN B] Matriz de LEDs ATIVADA\n");
+                sleep_ms(300);  // Debounce
+            }
+        }
+        
         float lux = 0;
         char lux_str[32];
         char intensity_str[32];
+        char status_str[32];
         
         // Lê o sensor de luminosidade
         if (bh1750_ok && bh1750_read_light(&light_sensor, &lux)) {
             snprintf(lux_str, sizeof(lux_str), "Luz: %.1f lux", lux);
             printf("%s\n", lux_str);
             
-            // Determina e aplica intensidade dos LEDs baseado na luminosidade
+            // Determina intensidade baseado na luminosidade
             led_intensity_t intensity = led_matrix_get_intensity_from_lux(lux);
-            led_matrix_set_intensity(&led_matrix, intensity);
+            
+            // Aplica intensidade APENAS se a matriz estiver ativada
+            if (led_matrix_enabled) {
+                led_matrix_set_intensity(&led_matrix, intensity);
+                snprintf(status_str, sizeof(status_str), "Status: ON");
+            } else {
+                snprintf(status_str, sizeof(status_str), "Status: OFF");
+            }
             
             // Define texto da intensidade para exibir no display
             switch (intensity) {
@@ -148,16 +193,18 @@ int main()
         } else {
             snprintf(lux_str, sizeof(lux_str), "Luz: Erro");
             snprintf(intensity_str, sizeof(intensity_str), "LED: --");
+            snprintf(status_str, sizeof(status_str), "Status: --");
             printf("Erro ao ler BH1750\n");
         }
         
         // Atualiza o display com as leituras
         ssd1306_clear(&display);
-        ssd1306_draw_string(&display, 0, 15, "Luminosidade:");
-        ssd1306_draw_string(&display, 0, 28, lux_str);
-        ssd1306_draw_string(&display, 0, 45, intensity_str);
+        ssd1306_draw_string(&display, 0, 8, "Luminosidade:");
+        ssd1306_draw_string(&display, 0, 21, lux_str);
+        ssd1306_draw_string(&display, 0, 38, intensity_str);
+        ssd1306_draw_string(&display, 0, 51, status_str);
         ssd1306_show(&display);
         
-        sleep_ms(1000);
+        sleep_ms(200);  // Reduzido para resposta mais rápida aos botões
     }
 }
