@@ -36,17 +36,17 @@ pico_sdk_init()
 # Add executable. Default name is the project name, version 0.1
 
 add_executable(MonitorAmbiental 
-    MonitorAmbiental.c 
-    ssd1306.c
-    bh1750.c
-    aht10.c
-    led_matrix.c
+        src/MonitorAmbiental.c 
+        drivers/ssd1306.c
+        drivers/bh1750.c
+        drivers/aht10.c
+        drivers/led_matrix.c
 )
 
 # Test executable
 add_executable(test_aht10
     test_aht10.c
-    aht10.c
+        drivers/aht10.c
 )
 
 # Generate PIO header
@@ -75,10 +75,16 @@ target_link_libraries(test_aht10
 # Add the standard include files to the build
 target_include_directories(MonitorAmbiental PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
+        ${CMAKE_CURRENT_LIST_DIR}/include
+        ${CMAKE_CURRENT_LIST_DIR}/drivers
+        ${CMAKE_CURRENT_LIST_DIR}/web
+        ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
 target_include_directories(test_aht10 PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
+        ${CMAKE_CURRENT_LIST_DIR}/include
+        ${CMAKE_CURRENT_LIST_DIR}/drivers
 )
 
 # Add any user requested libraries

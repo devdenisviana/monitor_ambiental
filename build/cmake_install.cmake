@@ -40,6 +40,7 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/pico-sdk/cmake_install.cmake")
+  include("K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/freertos_kernel/cmake_install.cmake")
 
 endif()
 

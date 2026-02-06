@@ -258,6 +258,18 @@ FETCHCONTENT_QUIET:BOOL=ON
 //Enables UPDATE_DISCONNECTED behavior for all content population
 FETCHCONTENT_UPDATES_DISCONNECTED:BOOL=OFF
 
+//FreeRTOS config directory
+FREERTOS_CONFIG_FILE_DIRECTORY:STRING=K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/include
+
+//FreeRTOS Heap implementation
+FREERTOS_HEAP:STRING=4
+
+//FreeRTOS Kernel Path
+FREERTOS_KERNEL_PATH:STRING=C:/Users/denis/.pico-sdk/sdk/2.2.0/lib/FreeRTOS-Kernel
+
+//FreeRTOS Port
+FREERTOS_PORT:STRING=GCC_RP2040
+
 //Value Computed by CMake
 MonitorAmbiental_BINARY_DIR:STATIC=K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build
 
@@ -464,7 +476,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=98
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=101
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP

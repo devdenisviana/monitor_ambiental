@@ -4,6 +4,11 @@
 #include "pico/stdlib.h"
 #include "led_matrix.h"
 
+#ifdef USE_FREERTOS
+#include "FreeRTOS.h"
+#include "semphr.h"
+#endif
+
 /**
  * @brief Estrutura que armazena todos os dados dos sensores
  * 
@@ -66,5 +71,13 @@ void sensor_data_set_temp_humidity(float temp, float humidity, bool valid);
  * @param intensity Nível de intensidade atual
  */
 void sensor_data_set_led_state(bool enabled, led_intensity_t intensity);
+
+#ifdef USE_FREERTOS
+/**
+ * @brief Define o mutex usado para proteger acesso aos dados
+ * @param mutex Handle do mutex
+ */
+void sensor_data_set_mutex(SemaphoreHandle_t mutex);
+#endif
 
 #endif // SENSOR_DATA_H

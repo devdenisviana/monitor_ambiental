@@ -33,17 +33,46 @@ project(MonitorAmbiental C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
+# FreeRTOS
+set(FREERTOS_KERNEL_PATH "${PICO_SDK_PATH}/lib/FreeRTOS-Kernel" CACHE STRING "FreeRTOS Kernel Path")
+if (EXISTS "${FREERTOS_KERNEL_PATH}/CMakeLists.txt")
+    add_library(freertos_config INTERFACE)
+    target_include_directories(freertos_config SYSTEM
+        INTERFACE
+            ${CMAKE_CURRENT_LIST_DIR}/include
+            ${FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040
+            ${FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/include
+    )
+    target_compile_definitions(freertos_config INTERFACE projCOVERAGE_TEST=0 configUSE_EVENT_GROUPS=1)
+
+    set(FREERTOS_CONFIG_FILE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include CACHE STRING "FreeRTOS config directory")
+    set(FREERTOS_PORT GCC_RP2040 CACHE STRING "FreeRTOS Port")
+    set(FREERTOS_HEAP 4 CACHE STRING "FreeRTOS Heap implementation")
+    add_subdirectory(${FREERTOS_KERNEL_PATH} ${CMAKE_CURRENT_BINARY_DIR}/freertos_kernel)
+
+else()
+    message(FATAL_ERROR "FreeRTOS-Kernel nao encontrado em ${FREERTOS_KERNEL_PATH}")
+endif()
+
 # Add executable. Default name is the project name, version 0.1
 
 add_executable(MonitorAmbiental 
-    MonitorAmbiental.c 
-    ssd1306.c
-    bh1750.c
-    aht10.c
-    led_matrix.c
-    sensor_data.c
-    wifi_manager.c
-    web_server.c
+    src/MonitorAmbiental.c 
+    drivers/ssd1306.c
+    drivers/bh1750.c
+    drivers/aht10.c
+    drivers/led_matrix.c
+    src/sensor_data.c
+    src/wifi_manager.c
+    web/web_server.c
+    web/auth.c
+    web/web_pages.c
+    src/rtos/rtos_app.c
+    src/rtos/task_sensors.c
+    src/rtos/task_display.c
+    src/rtos/task_uart.c
+    src/rtos/task_web.c
+    ${FREERTOS_KERNEL_PATH}/portable/MemMang/heap_4.c
 )
 
 # Generate PIO header
@@ -58,11 +87,21 @@ pico_enable_stdio_usb(MonitorAmbiental 1)
 
 # Add the standard library to the build
 target_link_libraries(MonitorAmbiental
-        pico_stdlib)
+    pico_stdlib
+    freertos_kernel
+    freertos_config)
 
 # Add the standard include files to the build
 target_include_directories(MonitorAmbiental PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}/include
+    ${CMAKE_CURRENT_LIST_DIR}/drivers
+    ${CMAKE_CURRENT_LIST_DIR}/web
+    ${CMAKE_CURRENT_LIST_DIR}/src
+    ${CMAKE_CURRENT_LIST_DIR}/src/rtos
+    ${FREERTOS_KERNEL_PATH}/include
+    ${FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040
+    ${FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/include
 )
 
 # Add any user requested libraries
@@ -71,6 +110,10 @@ target_link_libraries(MonitorAmbiental
         hardware_pio
         pico_cyw43_arch_lwip_threadsafe_background
         )
+
+target_compile_definitions(MonitorAmbiental PRIVATE
+    USE_FREERTOS=1
+    )
 
 pico_add_extra_outputs(MonitorAmbiental)
 

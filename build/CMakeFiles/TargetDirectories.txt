@@ -201,3 +201,11 @@ K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-
 K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/pico-sdk/src/rp2_common/pico_stdlib/CMakeFiles/rebuild_cache.dir
 K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/pico-sdk/docs/CMakeFiles/edit_cache.dir
 K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/pico-sdk/docs/CMakeFiles/rebuild_cache.dir
+K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/freertos_kernel/CMakeFiles/freertos_kernel.dir
+K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/freertos_kernel/CMakeFiles/edit_cache.dir
+K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/freertos_kernel/CMakeFiles/rebuild_cache.dir
+K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/freertos_kernel/include/CMakeFiles/edit_cache.dir
+K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/freertos_kernel/include/CMakeFiles/rebuild_cache.dir
+K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/freertos_kernel/portable/CMakeFiles/freertos_kernel_port.dir
+K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/freertos_kernel/portable/CMakeFiles/edit_cache.dir
+K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/freertos_kernel/portable/CMakeFiles/rebuild_cache.dir
