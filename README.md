@@ -1,19 +1,21 @@
 # 🌍 Monitor Ambiental
 
-Monitor ambiental baseado em **Raspberry Pi Pico W** que mede luminosidade e controla uma matriz de LEDs RGB inteligente baseada nas condições de luz ambiente.
+Monitor ambiental baseado em **Raspberry Pi Pico W** que mede luminosidade, temperatura e umidade, controla uma matriz de LEDs WS2812 e disponibiliza um painel web com autenticação.
 
 ---
 
-## 📋 Visão Geral do Projeto
+## 📋 Visao Geral do Projeto
 
 Este projeto implementa um sistema de monitoramento ambiental que:
 
 - ✅ **Mede luminosidade** em tempo real usando o sensor BH1750
-- ✅ **Exibe dados** em um display OLED SSD1306 (128x64 pixels)
-- ✅ **Controla matriz de LEDs** WS2812 (5x5 = 25 LEDs RGB) responsivamente
-- ✅ **Oferece controle manual** via botões integrados (BitDogLab)
-- ✅ **Implementa comunicação serial** para debug e monitoramento
-- ✅ **Usa múltiplos protocolos de comunicação** (I2C, GPIO, PIO)
+- ✅ **Mede temperatura e umidade** com o sensor AHT10
+- ✅ **Exibe dados** em um display OLED SSD1306 (128x64)
+- ✅ **Controla matriz de LEDs** WS2812 (5x5 = 25 LEDs RGB)
+- ✅ **Oferece controle manual** via botoes integrados (BitDogLab)
+- ✅ **Disponibiliza painel web** com login, dashboard e JSON
+- ✅ **Implementa comandos via UART** para diagnostico e controle
+- ✅ **Usa FreeRTOS** com tarefas dedicadas e sincronizacao de dados
 
 ---
 
@@ -21,88 +23,90 @@ Este projeto implementa um sistema de monitoramento ambiental que:
 
 - **Microcontrolador**: Raspberry Pi Pico W (RP2040)
 - **SDK**: Pico SDK v2.2.0
+- **RTOS**: FreeRTOS
+- **Rede**: CYW43 + lwIP (HTTP/TCP)
 - **Linguagem**: C11
 - **Compilador**: ARM GCC 14.2 Release 1
 - **Build Tool**: CMake 3.13+ com Ninja
 
-### Especificações do RP2040
+### Especificacoes do RP2040
 - **CPU**: ARM Cortex-M0+ dual-core @ 125 MHz
 - **RAM**: 264 KB SRAM
 - **Flash**: 2 MB
-- **GPIO**: 28 pinos (26 disponíveis para uso)
-- **Periféricos**: I2C, SPI, UART, ADC, PIO, PWM
+- **GPIO**: 28 pinos (26 disponiveis para uso)
+- **Perifericos**: I2C, SPI, UART, ADC, PIO, PWM
 
 ---
 
 ## 🔌 Mapeamento de Pinos
 
-### Comunicação I2C
+### Comunicacao I2C
 
-#### **I2C0** (Barrramento 0) - Sensor de Luminosidade BH1750
-| Pino RP2040 | Sinal | Sensor BH1750 | Descrição |
+#### **I2C0** (Barramento 0) - BH1750 + AHT10
+| Pino RP2040 | Sinal | Sensor | Descricao |
 |---|---|---|---|
-| **GPIO 0 (GP0)** | SDA | PIN 4 (SDA) | Dados |
-| **GPIO 1 (GP1)** | SCL | PIN 6 (SCL) | Clock |
-| GND | GND | PIN 2 (GND) | Terra |
-| 3V3 | VCC | PIN 1 (VCC) | Alimentação |
+| **GPIO 0 (GP0)** | SDA | BH1750/AHT10 | Dados |
+| **GPIO 1 (GP1)** | SCL | BH1750/AHT10 | Clock |
+| GND | GND | Ambos | Terra |
+| 3V3 | VCC | Ambos | Alimentacao |
 
-**Frequência**: 400 kHz (modo padrão I2C)
-**Endereço I2C**: 0x23 (padrão) ou 0x5C (alternativo - se ADDR em HIGH)
+**Frequencia**: 100 kHz (compatibilidade com AHT10)
+**Enderecos I2C**:
+- BH1750: 0x23 (padrao) ou 0x5C (alternativo)
+- AHT10: 0x38
 
 #### **I2C1** (Barramento 1) - Display OLED SSD1306
-| Pino RP2040 | Sinal | Display SSD1306 | Descrição |
+| Pino RP2040 | Sinal | Display SSD1306 | Descricao |
 |---|---|---|---|
 | **GPIO 14 (GP14)** | SDA | PIN 4 (SDA) | Dados |
 | **GPIO 15 (GP15)** | SCL | PIN 3 (SCL) | Clock |
 | GND | GND | PIN 2 (GND) | Terra |
-| 3V3 | VCC | PIN 1 (VCC) | Alimentação |
+| 3V3 | VCC | PIN 1 (VCC) | Alimentacao |
 
-**Frequência**: 400 kHz
-**Endereço I2C**: 0x3C
-**Resolução**: 128x64 pixels
-**Protocolo**: OLED monocromático (preto e branco)
+**Frequencia**: 400 kHz
+**Endereco I2C**: 0x3C
+**Resolucao**: 128x64 pixels
 
-### Outras Saídas
+### Outras Saidas
 
 #### **Matriz de LEDs WS2812**
-| Pino RP2040 | Sinal | WS2812 | Descrição |
+| Pino RP2040 | Sinal | WS2812 | Descricao |
 |---|---|---|---|
-| **GPIO 7 (GP7)** | DIN | PIN 1 (DIN) | Dados série (sinal PWM) |
-| 5V | VCC | PIN 2 (VCC) | Alimentação (requer potência adequada) |
+| **GPIO 7 (GP7)** | DIN | PIN 1 (DIN) | Dados serie (PIO) |
+| 5V | VCC | PIN 2 (VCC) | Alimentacao (requer potencia adequada) |
 | GND | GND | PIN 3 (GND) | Terra |
 
 **Quantidade**: 25 LEDs (matriz 5x5)
-**Protocolo**: WS2812 (NeoPixel/Addressable RGB)
-**Implementação**: PIO (Programmable I/O) - microcontrolador a 800 kHz
+**Protocolo**: WS2812 (1-wire, 800 kHz)
+**Implementacao**: PIO
 
 ### Controle de Entrada
 
-#### **Botões BitDogLab**
-| Pino RP2040 | Botão | Descrição |
+#### **Botoes BitDogLab**
+| Pino RP2040 | Botao | Descricao |
 |---|---|---|
-| **GPIO 5 (GP5)** | **Botão A** | **Desativa matriz de LEDs** |
-| **GPIO 6 (GP6)** | **Botão B** | **Ativa matriz de LEDs** |
+| **GPIO 5 (GP5)** | **Botao A** | **Desativa matriz de LEDs** |
+| **GPIO 6 (GP6)** | **Botao B** | **Ativa matriz de LEDs** |
 
 **Tipo**: Pull-up interno habilitado
-**Acionamento**: Nível baixo (0 = pressionado)
-**Debounce**: 300 ms por software
+**Acionamento**: Nivel baixo (0 = pressionado)
+**Debounce**: 200 ms (ISR + tarefa)
 
-### Comunicação Serial
+### Comunicacao Serial
 
 #### **UART0** (Serial via USB)
 - **Habilitada**: Sim (stdio via USB e UART)
 - **Baud Rate**: 115200 bps
-- **Uso**: Debug, mensagens de status, leituras de sensores
-- **Conectar**: Porta USB-C do Pico ou UART0 (GP0/GP1)
+- **Uso**: Debug, comandos e diagnostico
 
 ---
 
 ## 🖥️ Protocolo I2C
 
-### Configuração
+### Configuracao
 ```c
-// I2C0: BH1750
-i2c_init(i2c0, 400 * 1000);      // 400 kHz
+// I2C0: BH1750 + AHT10
+i2c_init(i2c0, 100 * 1000);      // 100 kHz
 gpio_set_function(0, GPIO_FUNC_I2C);
 gpio_set_function(1, GPIO_FUNC_I2C);
 
@@ -112,155 +116,26 @@ gpio_set_function(14, GPIO_FUNC_I2C);
 gpio_set_function(15, GPIO_FUNC_I2C);
 ```
 
-### Operações I2C Utilizadas
-
-#### **Leitura Bloqueante** (BH1750)
-```c
-int result = i2c_read_blocking(i2c0, 0x23, data, 2, false);
-// Lê 2 bytes do sensor em 0x23
-```
-
-#### **Escrita Bloqueante** (BH1750, SSD1306)
-```c
-int result = i2c_write_blocking(i2c0, 0x23, &cmd, 1, false);
-// Envia 1 byte de comando ao sensor em 0x23
-```
-
 ### Scanner I2C Integrado
-Ao inicializar, o programa executa uma varredura de todos os endereços I2C (0x00-0x7F) em ambos os barramentos para detectar e listar dispositivos conectados.
+Ao inicializar, o programa executa uma varredura de enderecos (0x00-0x7F) em ambos os barramentos para detectar e listar dispositivos conectados.
 
 ---
 
-## 📡 Sensores e Periféricos
+## 📡 Sensores e Perifericos
 
 ### 1️⃣ Sensor de Luz - BH1750
 
-**Fabricante**: Rohm Semiconductor  
-**Tipo**: Sensor de luminosidade (luxímetro digital)  
-**Protocolo**: I2C (barramento I2C0)  
-**Endereço**: 0x23 (padrão) ou 0x5C (alternativo)
+**Tipo**: Sensor de luminosidade (luximetro digital)
+**Protocolo**: I2C (barramento I2C0)
+**Endereco**: 0x23 (padrao) ou 0x5C (alternativo)
 
-#### Especificações
-| Parâmetro | Valor |
-|---|---|
-| Faixa de Medição | 1 - 65535 lux |
-| Resolução Modo Alta | 0.5 a 1.0 lux |
-| Resolução Modo Baixa | 4 lux |
-| Tempo de Medição | 16 ms (modo baixo) a 120 ms (modo alto) |
-| Alimentação | 2.4V - 3.6V (típico 3.3V) |
-| Consumo | ~0.16 mA (operação contínua) |
-
-#### Modos de Operação Implementados
-```c
-#define BH1750_POWER_DOWN           0x00  // Desliga (economia de energia)
-#define BH1750_POWER_ON             0x01  // Liga
-#define BH1750_RESET                0x07  // Reset
-
-#define BH1750_CONTINUOUS_HIGH_RES_MODE  0x10  // 1 lx, 120ms (ATUAL)
-#define BH1750_CONTINUOUS_HIGH_RES_MODE2 0x11  // 0.5 lx, 120ms
-#define BH1750_CONTINUOUS_LOW_RES_MODE   0x13  // 4 lx, 16ms
-```
-
-**Modo Utilizado**: `CONTINUOUS_HIGH_RES_MODE` (0x10)
-- Resolução: 1 lux
-- Tempo de atualização: ~120 ms
-- Recomendado para uso em tempo real
-
-#### Fórmula de Conversão
+#### Conversao
 ```c
 uint16_t raw_value = (data[0] << 8) | data[1];
 float lux = raw_value / 1.2f;
 ```
 
-#### Calibração por Luminosidade Ambiente
-O programa agrupa a luminosidade em faixas de ambiente típicas:
-```
-Valor Lux | Ambiente | Descrição
-0-50      | Escuro   | Noite, ambiente sem iluminação
-50-200    | Pouco    | Ambiente interior com iluminação fraca
-200-500   | Moderado | Ambiente interior bem iluminado
-500+      | Claro    | Luz solar ou iluminação forte
-```
-
-### 2️⃣ Display OLED - SSD1306
-
-**Fabricante**: Solomon Systech  
-**Tipo**: Display OLED monocromático  
-**Protocolo**: I2C (barramento I2C1)  
-**Endereço**: 0x3C (padrão)
-
-#### Especificações
-| Parâmetro | Valor |
-|---|---|
-| Resolução | 128 x 64 pixels |
-| Tamanho | 0.96 polegadas (diagonal) |
-| Cores | Preto e Branco |
-| Tipo de Tela | OLED (Auto-emissiva) |
-| Alimentação | 3.3V - 5V |
-| Consumo | ~10 mA (típico) |
-
-#### Inicialização
-```c
-ssd1306_init(&display, i2c1, 0x3C);
-```
-
-#### Operações Implementadas
-```c
-ssd1306_clear(&display);                    // Limpa tela
-ssd1306_show(&display);                     // Atualiza display
-ssd1306_draw_pixel(&display, x, y, on);     // Desenha pixel
-ssd1306_draw_char(&display, x, y, 'A');    // Desenha caractere (5x8)
-ssd1306_draw_string(&display, x, y, "Txt"); // Desenha string
-```
-
-#### Buffer de Tela
-- Tamanho: 128 x 64 bits = 1024 bytes
-- Organizado em 8 páginas de 128 bytes
-- Cada byte representa 8 pixels verticalmente
-
-#### Fontes Disponíveis
-- **Fonte 5x8**: 96 caracteres (ASCII 32-127)
-- Inclui números, letras maiúsculas/minúsculas, símbolos
-
----
-
-### 3️⃣ Matriz de LEDs WS2812 (NeoPixel)
-
-**Tipo**: LED RGB Endereçável (Smart LED)  
-**Quantidade**: 25 LEDs (matriz 5x5)  
-**Protocolo**: WS2812 (1-wire, 800 kHz)  
-**Pino**: GPIO 7
-
-#### Especificações
-| Parâmetro | Valor |
-|---|---|
-| Tensão Operacional | 5V (recomendado) |
-| Corrente por LED | ~60 mA (white, máx) |
-| Corrente Total | ~1.5 A (25 LEDs brancos no máximo) |
-| Tempo de Bit | 1.25 µs |
-| Frequência de Dados | 800 kHz |
-
-#### Implementação com PIO (Programmable I/O)
-```c
-#define PIO_FREQ 800000  // 800 kHz para WS2812
-uint offset = pio_add_program(pio0, &ws2812_program);
-ws2812_program_init(pio0, sm, offset, gpio_pin, 800_000, false);
-```
-
-**Por que PIO?** O timing crítico do WS2812 exige controle de hardware preciso que a CPU não pode garantir com interrupções. O PIO executa o protocolo de forma determinística em hardware dedicado.
-
-#### Cores e Intensidades
-A implementação usa **cores brancas** (R=G=B) com intensidades variáveis:
-
-```c
-Intensidade | Nível | RGB Value | Descrição
-OFF         | 0     | 0x000000  | Desligado
-LOW         | 3     | 0x030303  | 1% (fraco - notável)
-MEDIUM      | 8     | 0x080808  | 3% (médio)
-HIGH        | 25    | 0x191919  | 10% (forte - bem visível)
-```
-
-#### Lógica de Intensidade por Luminosidade
+#### Logica de Intensidade por Luminosidade
 ```
 Ambiente Lux | Estado LED | Objetivo
 0-50         | HIGH (10%) | Auxiliar em ambiente escuro
@@ -269,62 +144,97 @@ Ambiente Lux | Estado LED | Objetivo
 500+         | OFF        | Desligado em ambiente muito claro
 ```
 
-**Racional**: Lógica inversa - quanto mais luz natural, menos LEDs precisam acender para poupar energia e evitar ofuscação.
+### 2️⃣ Sensor de Temperatura/Umidade - AHT10
+
+**Tipo**: Sensor digital de temperatura e umidade
+**Protocolo**: I2C (barramento I2C0)
+**Endereco**: 0x38
+**Tempo de medicao**: ~80 ms
+
+#### Formulas
+```
+Temperatura (C) = (raw * 200 / 2^20) - 50
+Umidade (%) = raw * 100 / 2^20
+```
+
+### 3️⃣ Display OLED - SSD1306
+
+**Tipo**: Display OLED monocromatico
+**Protocolo**: I2C (barramento I2C1)
+**Endereco**: 0x3C
+**Telas**:
+- Tela 1: luminosidade + intensidade de LED + status
+- Tela 2: temperatura + umidade
+
+### 4️⃣ Matriz de LEDs WS2812 (NeoPixel)
+
+**Tipo**: LED RGB enderecavel (Smart LED)
+**Quantidade**: 25 LEDs (matriz 5x5)
+**Protocolo**: WS2812 (1-wire, 800 kHz)
+**Pino**: GPIO 7
 
 ---
 
-## 🎮 Controle de Interface
+## 🌐 WiFi e Servidor Web
 
-### Botões BitDogLab
+### Conexao WiFi
+- Chip CYW43 inicializa no boot
+- Conexao com SSID e senha em [include/wifi_config.h](include/wifi_config.h)
+- Timeout padrao: 30 s
 
-#### Botão A (GPIO 5)
-- **Função**: Desativar matriz de LEDs
-- **Estado**: LED OFF mesmo se houver detecção de luz
-- **Debounce**: 300 ms
+### Servidor HTTP (porta 80)
+Rotas implementadas:
+- `/` ou `/index.html`: dashboard (autenticado)
+- `/login`: formulario de login
+- `/settings`: altera usuario e senha (autenticado)
+- `/logout`: encerra sessao
+- `/data`: JSON com leituras (autenticado)
 
-#### Botão B (GPIO 6)
-- **Função**: Reativar matriz de LEDs
-- **Estado**: LEDs respondem normalmente à luminosidade
-- **Debounce**: 300 ms
+### Credenciais
+- Usuario/senha padrao: `root / root`
+- Pode ser alterado via pagina de configuracao ou por comandos UART
+- Sessao baseada em cookie `session`
 
-#### Comportamento
+---
+
+## 🧵 FreeRTOS e Tarefas
+
+Tarefas criadas em [src/rtos/rtos_app.c](src/rtos/rtos_app.c):
+
+- **task_sensors**: leitura BH1750/AHT10, botoes (IRQ), atualiza LED (200 ms)
+- **task_display**: alterna telas OLED (a cada 3 s), atualiza a cada 200 ms
+- **task_uart**: comandos e diagnostico (poll a cada 20 ms)
+- **task_web**: poll de rede e servidor (100 ms)
+
+Dados compartilhados via `sensor_data` com mutex quando FreeRTOS esta ativo.
+
+---
+
+## 🔌 Comandos UART
+
+Disponiveis via serial (115200 bps):
+
 ```
-Estado Inicial: LEDs ATIVADOS
-├─ Pressionar Botão A → LEDs DESATIVADOS
-│  └─ Exibe "Status: OFF" no display
-└─ Pressionar Botão B → LEDs ATIVADOS
-   └─ Exibe "Status: ON" no display
+HELP
+STATUS
+WIFI?
+LED ON
+LED OFF
+LOGIN RESET
+LOGIN SET <usuario> <senha>
 ```
 
 ---
 
-## 📊 Fluxo Principal de Execução
+## 📊 Fluxo Principal de Execucao
 
 ```
-1. INICIALIZAÇÃO (3 segundos)
-   ├─ Configurar GPIO (botões)
-   ├─ Inicializar I2C0 (400 kHz)
-   ├─ Inicializar I2C1 (400 kHz)
-   ├─ Executar Scanner I2C (ambos barramentos)
-   ├─ Inicializar Display SSD1306
-   ├─ Inicializar Sensor BH1750
-   ├─ Inicializar Matriz WS2812 (PIO)
-   └─ Exibir "Monitor Ambiental" no display
-
-2. LOOP PRINCIPAL (atualização a cada 200 ms)
-   ├─ [A] Verificar Botão A → Desativa LEDs
-   ├─ [B] Verificar Botão B → Ativa LEDs
-   ├─ Ler sensor BH1750
-   │  ├─ Obter valor em lux
-   │  ├─ Converter para intensidade
-   │  └─ Se LEDs ativados: aplicar intensidade
-   ├─ Atualizar Display SSD1306
-   │  ├─ "Luminosidade:"
-   │  ├─ "Luz: XX.X lux"
-   │  ├─ "LED: [Fraco/Médio/Forte/Desligado]"
-   │  └─ "Status: [ON/OFF]"
-   ├─ Enviar dados via UART (debug)
-   └─ Aguardar 200 ms
+1. Inicializa display e CYW43
+2. Inicializa botoes, I2C0 (100 kHz) e I2C1 (400 kHz)
+3. Scanner I2C em ambos os barramentos
+4. Inicializa BH1750, AHT10 e matriz WS2812
+5. Conecta ao WiFi e inicia servidor web (se possivel)
+6. Cria tarefas FreeRTOS e inicia o scheduler
 ```
 
 ### Exemplo de Saída Serial
@@ -475,16 +385,16 @@ Ou pressionar **Ctrl+F5** no VS Code para executar a task "Run Project".
 
 ## 📝 Como Testar
 
-### Teste 1: Verificar Inicialização
+### Teste 1: Verificar Inicializacao
 1. Compilar e fazer flash do firmware
 2. **Conectar Monitor Serial** (115200 baud)
    - VS Code: Usar a extensão "Serial Port Monitor"
    - Ou: `putty.exe` com 115200 baud
 3. **Observar**:
-   - ✅ Scanner I2C encontra 0x23 (BH1750) em I2C0
+   - ✅ Scanner I2C encontra 0x23/0x5C (BH1750) e 0x38 (AHT10) em I2C0
    - ✅ Scanner I2C encontra 0x3C (SSD1306) em I2C1
-   - ✅ Display mostra "Monitor Ambiental"
-   - ✅ Mensagens "[OK]" para todos os componentes
+   - ✅ Display mostra mensagens de boot e depois o titulo
+   - ✅ Mensagens "[OK]" para sensores, LEDs e WiFi (se conectado)
 
 ### Teste 2: Leitura de Luminosidade
 1. **Ambiente bem iluminado** (>500 lux)
@@ -505,7 +415,7 @@ Ou pressionar **Ctrl+F5** no VS Code para executar a task "Run Project".
 
 **Dica**: Use luz de celular para aumentar/diminuir a luminosidade sobre o sensor
 
-### Teste 3: Controle de Botões
+### Teste 3: Controle de Botoes
 1. **Pressionar Botão A** (GPIO 5)
    - LEDs apagam
    - Display: "Status: OFF"
@@ -516,7 +426,12 @@ Ou pressionar **Ctrl+F5** no VS Code para executar a task "Run Project".
    - Display: "Status: ON"
    - Serial: "[BTN B] Matriz de LEDs ATIVADA"
 
-### Teste 4: Verificar I2C
+### Teste 4: Temperatura e Umidade (AHT10)
+1. Aguarde a alternancia de telas no display
+2. Verifique se aparecem valores de temperatura e umidade
+3. Se der erro, confira o endereco 0x38 e cabos do AHT10
+
+### Teste 5: Verificar I2C
 Execute o scanner I2C manualmente:
 ```c
 i2c_scan(i2c0, "I2C0 (GP0/GP1)");
@@ -524,12 +439,30 @@ i2c_scan(i2c1, "I2C1 (GP14/GP15)");
 ```
 
 Esperado:
-- I2C0: **Encontrado 1 dispositivo** (0x23)
+- I2C0: **Encontrado 2 dispositivos** (0x23/0x5C e 0x38)
 - I2C1: **Encontrado 1 dispositivo** (0x3C)
 
-### Teste 5: Performance e Responsividade
+### Teste 6: UART (Comandos)
+1. Abra o monitor serial (115200)
+2. Digite `HELP` para listar comandos
+3. Teste:
+   - `STATUS` (leituras atuais)
+   - `WIFI?` (estado e IP)
+   - `LED ON` / `LED OFF`
+   - `LOGIN SET usuario senha`
+   - `LOGIN RESET`
+
+### Teste 7: WiFi e Servidor Web
+1. Configure SSID e senha em [include/wifi_config.h](include/wifi_config.h)
+2. Observe o IP no serial e no display
+3. Abra o navegador em `http://<IP>`
+4. Login com `root / root`
+5. Verifique o dashboard e o refresh automatico
+6. Acesse `http://<IP>/data` e confirme JSON valido
+
+### Teste 8: Performance e Responsividade
 - **Latência de Atualização**: ~200 ms
-- **Tempo de Resposta dos Botões**: ~300 ms (debounce)
+- **Tempo de Resposta dos Botoes**: ~200 ms (debounce)
 - **Frequência de Leitura**: 5 Hz (200 ms)
 - **Taxa de Atualização Display**: 5 Hz
 
@@ -539,45 +472,36 @@ Esperado:
 
 ```
 projeto/
-├─ MonitorAmbiental.c          # Programa principal
-├─ CMakeLists.txt              # Configuração CMake
+├─ src/
+│  ├─ MonitorAmbiental.c       # Programa principal
+│  ├─ sensor_data.c            # Estado compartilhado de sensores
+│  ├─ wifi_manager.c           # Conexao WiFi (CYW43)
+│  └─ rtos/
+│     ├─ rtos_app.c            # Cria tarefas FreeRTOS
+│     ├─ task_sensors.c        # Leitura de sensores e botoes
+│     ├─ task_display.c        # Telas OLED
+│     ├─ task_uart.c           # Comandos UART
+│     └─ task_web.c            # Servidor HTTP
+│
+├─ drivers/
+│  ├─ bh1750.c/.h              # Sensor de luminosidade
+│  ├─ aht10.c/.h               # Temperatura e umidade
+│  ├─ ssd1306.c/.h             # Display OLED
+│  └─ led_matrix.c/.h          # WS2812
+│
+├─ web/
+│  ├─ web_server.c/.h          # Servidor HTTP (lwIP)
+│  ├─ web_pages.c/.h           # Paginas HTML/JSON
+│  └─ auth.c/.h                # Login/sessao
+│
+├─ include/
+│  ├─ wifi_config.h            # SSID, senha e porta
+│  ├─ sensor_data.h            # API do estado compartilhado
+│  └─ rtos_tasks.h             # Declaracoes de tarefas
+│
+├─ CMakeLists.txt              # Configuracao CMake
 ├─ pico_sdk_import.cmake       # Import Pico SDK
-├─ README.md                   # Este arquivo
-│
-├─ Sensor BH1750
-│  ├─ bh1750.h                 # Header
-│  └─ bh1750.c                 # Implementação
-│   └─ Funções:
-│       ├─ bh1750_init()       # Inicializar
-│       ├─ bh1750_read_light() # Ler luminosidade
-│       ├─ bh1750_power_on()   # Ligar
-│       └─ bh1750_power_down() # Desligar
-│
-├─ Display SSD1306
-│  ├─ ssd1306.h                # Header
-│  └─ ssd1306.c                # Implementação
-│   └─ Funções:
-│       ├─ ssd1306_init()      # Inicializar
-│       ├─ ssd1306_clear()     # Limpar
-│       ├─ ssd1306_show()      # Atualizar
-│       ├─ ssd1306_draw_pixel()# Pixel
-│       ├─ ssd1306_draw_char() # Caractere
-│       └─ ssd1306_draw_string()# String
-│
-├─ Matriz de LEDs WS2812
-│  ├─ led_matrix.h             # Header
-│  ├─ led_matrix.c             # Implementação
-│  └─ ws2812.pio               # Programa PIO (protocolo WS2812)
-│   └─ Funções:
-│       ├─ led_matrix_init()
-│       ├─ led_matrix_set_intensity()
-│       ├─ led_matrix_clear()
-│       └─ led_matrix_get_intensity_from_lux()
-│
-└─ build/                       # Diretório de build
-   ├─ MonitorAmbiental.elf     # Executável
-   ├─ MonitorAmbiental.uf2     # Firmware
-   └─ ... (arquivos CMake)
+└─ build/                       # Diretorio de build
 ```
 
 ---
@@ -674,8 +598,14 @@ led_matrix_clear(&led_matrix);
 **Solução**:
 - Verificar pinos GP5 (BTN A) e GP6 (BTN B)
 - Confirmar pull-up habilitado
-- Aumentar debounce (300 ms)
-- Testar com LED serial `printf()`
+- Aumentar debounce (200 ms)
+- Testar com log via serial
+
+### Problema: WiFi nao conecta
+**Solucao**:
+- Verificar SSID e senha em [include/wifi_config.h](include/wifi_config.h)
+- Confirmar sinal WiFi e 2.4 GHz
+- Verificar mensagens no serial
 
 ### Problema: Compilação falha
 **Solução**:
@@ -716,11 +646,11 @@ ninja
 
 ---
 
-## 📝 Versão
+## 📝 Versao
 
-- **Versão do Projeto**: 0.1 (Protótipo)
+- **Versao do Projeto**: 0.2
 - **SDK Pico**: 2.2.0
-- **Data**: Dezembro 2025
+- **Data**: Fevereiro 2026
 - **Status**: Funcional - Em desenvolvimento
 
 ---
@@ -743,10 +673,14 @@ Código livre para uso educacional e comercial com atribuição.
 - [x] Flash via UF2/Picotool
 - [x] Scanner I2C detecta ambos sensores
 - [x] Leitura BH1750 em tempo real
+- [x] Leitura AHT10 (temperatura/umidade)
 - [x] Display SSD1306 exibe dados
 - [x] Matriz WS2812 responde à luminosidade
 - [x] Botões A e B controlam LEDs
 - [x] Comunicação UART/USB em 115200 baud
+- [x] Comandos UART operacionais
+- [x] WiFi conectado (Pico W)
+- [x] Servidor web com login e dashboard
 - [x] Responsividade satisfatória (200 ms)
 - [x] Consumo de energia otimizado
 
@@ -754,11 +688,7 @@ Código livre para uso educacional e comercial com atribuição.
 
 ## 🔮 Melhorias Futuras
 
-- [ ] Implementar FreeRTOS para multitarefa
-- [ ] Adicionar leitura de temperatura/umidade (DHT22, BMP280)
-- [ ] Sincronização com WiFi (Pico W)
 - [ ] Log de dados em SD card
-- [ ] Dashboard web para monitoramento remoto
 - [ ] Modos de economia de energia (sleep mode)
 - [ ] Padrões de animação na matriz de LEDs
 - [ ] Calibração automática de sensores
