@@ -731,7 +731,7 @@ Exemplo de log (ja presente acima): secao "Exemplo de Saida Serial".
 
 ## Video obrigatorio (5 a 7 minutos)
 
-- Link do video: [INSERIR LINK AQUI]
+- Link do video: https://drive.google.com/drive/folders/1vznWDk_Uq3F2FZm2rws7b4j9DLqT3rWP?usp=sharing
 - Roteiro sugerido: demonstrar inicializacao, sensores, display, UART, WiFi e painel web.
 
 ## Conclusao
