@@ -16,8 +16,8 @@
 // CONFIGURE SUAS CREDENCIAIS WIFI AQUI
 // ============================================
 
-#define WIFI_SSID       "Asgard"      // Nome da sua rede WiFi
-#define WIFI_PASSWORD   "ma199720@"     // Senha da sua rede WiFi
+#define WIFI_SSID       "SuaRedeWiFi"      // Nome da sua rede WiFi
+#define WIFI_PASSWORD   "SuaSenhaWiFi"     // Senha da sua rede WiFi
 
 // ============================================
 // CONFIGURAÇÕES DO SERVIDOR WEB
