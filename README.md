@@ -19,6 +19,74 @@ Este projeto implementa um sistema de monitoramento ambiental que:
 
 ---
 
+## Titulo
+
+Monitor Ambiental (Raspberry Pi Pico W + FreeRTOS + WiFi + Sensores)
+
+## Introducao
+
+Este projeto apresenta um sistema de monitoramento ambiental embarcado em Raspberry Pi Pico W, com leitura de sensores, exibicao local em display grafico e acesso remoto via rede WiFi. A implementacao prioriza organizacao em tarefas com FreeRTOS e interfaces padronizadas (I2C, UART e HTTP/TCP).
+
+## Objetivos
+
+- Medir luminosidade, temperatura e umidade com dois sensores I2C.
+- Exibir informacoes localmente em display OLED e em painel web.
+- Utilizar FreeRTOS para separar tarefas de sensores, display, UART e rede.
+- Disponibilizar comunicacao via WiFi com protocolo HTTP/TCP.
+- Comprovar uso de interrupcao para botoes e comunicacao serial UART.
+
+## Justificativa
+
+Monitoramento ambiental com interface local e remota permite tomada de decisao rapida e aprendizado de integracao entre sensores, RTOS e conectividade IoT. O projeto tambem consolida o uso do Pico W e do stack lwIP em cenarios reais.
+
+## Problematica
+
+Sistemas embarcados de baixo custo normalmente nao possuem monitoramento remoto e organizacao concorrente de tarefas. O desafio e integrar sensores, display e rede WiFi mantendo responsividade, estabilidade e baixo consumo.
+
+## Requisitos obrigatorios (verificacao)
+
+- Linguagem C: sim (C11 no projeto e arquivos .c/.h).
+- Raspberry Pi Pico W: sim (CYW43/WiFi em uso).
+- FreeRTOS: sim (tarefas dedicadas).
+- Dois sensores: sim (BH1750 e AHT10).
+- WiFi: sim (conexao com CYW43).
+- Protocolo: sim (HTTP/TCP via lwIP).
+- Display grafico: sim (SSD1306 OLED).
+- Interface UART: sim (comandos UART).
+- Interrupcao: sim (IRQ para botoes).
+
+## Arquitetura do sistema (Hardware + Firmware + IoT) - Diagrama de blocos
+
+```mermaid
+graph LR
+   A[Ambiente] --> B[BH1750 (Luz)]
+   A --> C[AHT10 (Temp/Umidade)]
+   B --> D[Raspberry Pi Pico W]
+   C --> D
+   E[Botao A/B] --> D
+   D --> F[OLED SSD1306]
+   D --> G[WS2812 5x5]
+   D --> H[UART/USB]
+   D --> I[WiFi CYW43 + lwIP]
+   I --> J[HTTP/TCP - Painel Web]
+   D --> K[FreeRTOS Tasks]
+```
+
+**Hardware**: Pico W + BH1750 + AHT10 + OLED SSD1306 + WS2812 + botoes.
+
+**Firmware**: Drivers I2C/PIO, tarefas FreeRTOS, controle de LEDs, UART e servidor HTTP.
+
+**IoT**: WiFi (CYW43) + lwIP com servidor HTTP/TCP e painel web autenticado.
+
+## Desenvolvimento do sistema
+
+- **Modulos principais**: `drivers` (sensores, display, LEDs), `src` (aplicacao), `web` (servidor HTTP e paginas).
+- **Tarefas FreeRTOS**: `task_sensors`, `task_display`, `task_uart`, `task_web`.
+- **Sensores**: BH1750 (luminosidade) e AHT10 (temperatura/umidade).
+- **Protocolos**: I2C para sensores/display; HTTP/TCP via lwIP; UART para comandos.
+
+---
+
 ## 🔧 Plataforma Alvo
 
 - **Microcontrolador**: Raspberry Pi Pico W (RP2040)
@@ -626,7 +694,26 @@ ninja
 
 ---
 
-## 📚 Recursos e Documentação
+## Evidencias de funcionamento
+
+> Reserve esta area e insira suas evidencias reais.
+
+- Prints do painel web (login, dashboard, JSON).
+- Fotos do hardware montado (Pico W + sensores + display + LEDs).
+- Logs de comunicacao (serial UART e requisicoes HTTP).
+
+Exemplo de log (ja presente acima): secao "Exemplo de Saida Serial".
+
+## Video obrigatorio (5 a 7 minutos)
+
+- Link do video: [INSERIR LINK AQUI]
+- Roteiro sugerido: demonstrar inicializacao, sensores, display, UART, WiFi e painel web.
+
+## Conclusao
+
+O projeto cumpre os requisitos do sistema embarcado com Pico W, integrando dois sensores via I2C, interface grafica, controle por UART e conectividade WiFi com servidor HTTP. A divisao em tarefas FreeRTOS garante responsividade e facilita a manutencao do firmware.
+
+## Referencias
 
 ### Datasheets
 - [BH1750 Ambient Light Sensor](https://www.mouser.com/datasheet/2/348/bh1750fvi-e-485057.pdf)
@@ -695,5 +782,11 @@ Código livre para uso educacional e comercial com atribuição.
 - [ ] Interface gráfica avançada no display
 
 ---
+
+## Apendices
+
+- Codigo fonte (GitHub): https://github.com/devdenisviana/monitor_ambiental
+- Esquematicos: [INSERIR LINK AQUI]
+- Diagramas adicionais: [INSERIR LINK AQUI]
 
 **Desenvolvido com ❤️ para aprendizado em microcontroladores**

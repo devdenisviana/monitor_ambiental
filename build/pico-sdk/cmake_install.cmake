@@ -39,22 +39,22 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/pico-sdk/tools/cmake_install.cmake")
+  include("K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_5/monitor_ambiental/build/pico-sdk/tools/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/pico-sdk/src/cmake_install.cmake")
+  include("K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_5/monitor_ambiental/build/pico-sdk/src/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/pico-sdk/docs/cmake_install.cmake")
+  include("K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_5/monitor_ambiental/build/pico-sdk/docs/cmake_install.cmake")
 endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/pico-sdk/install_local_manifest.txt"
+  file(WRITE "K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_5/monitor_ambiental/build/pico-sdk/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()

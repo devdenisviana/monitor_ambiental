@@ -40,6 +40,6 @@ endif()
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_3/build/pico-sdk/src/rp2_common/pico_platform_panic/install_local_manifest.txt"
+  file(WRITE "K:/ResidenciaDPM/Material Moodle/projetos-ideias/Projeto-monitor/codigo/monitor-ambiental_5/monitor_ambiental/build/pico-sdk/src/rp2_common/pico_platform_panic/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
