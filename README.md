@@ -57,19 +57,44 @@ Sistemas embarcados de baixo custo normalmente nao possuem monitoramento remoto 
 
 ## Arquitetura do sistema (Hardware + Firmware + IoT) - Diagrama de blocos
 
-```mermaid
-graph LR
-   A[Ambiente] --> B[BH1750 (Luz)]
-   A --> C[AHT10 (Temp/Umidade)]
-   B --> D[Raspberry Pi Pico W]
-   C --> D
-   E[Botao A/B] --> D
-   D --> F[OLED SSD1306]
-   D --> G[WS2812 5x5]
-   D --> H[UART/USB]
-   D --> I[WiFi CYW43 + lwIP]
-   I --> J[HTTP/TCP - Painel Web]
-   D --> K[FreeRTOS Tasks]
+```
+        +-------------------+
+        |     Ambiente      |
+        +---------+---------+
+             |
+       +---------------+----------------+
+       |                                |
+   +--------v-------+                +-------v--------+
+   |  BH1750 (Luz)  |                | AHT10 (Temp/U) |
+   +--------+-------+                +-------+--------+
+       |                                |
+       +---------------+----------------+
+             |
+          +-------v--------+
+          | Pico W (RP2040)|
+          +---+---+---+----+
+         |   |   |
+      +-----------------+   |   +-----------------+
+      |                     |                     |
+ +----v-----+         +-----v-----+         +----v-----+
+ | OLED     |         | WS2812    |         | UART/USB |
+ | SSD1306  |         | 5x5 LEDs  |         +----------+
+ +----------+         +-----------+
+         |
+       +------v-------+
+       | FreeRTOS     |
+       | (Tasks)      |
+       +------+-------+
+         |
+      +-------v--------+
+      | WiFi CYW43     |
+      | + lwIP         |
+      +-------+--------+
+         |
+      +-------v--------+
+      | HTTP/TCP       |
+      | Painel Web     |
+      +----------------+
 ```
 
 **Hardware**: Pico W + BH1750 + AHT10 + OLED SSD1306 + WS2812 + botoes.
@@ -789,4 +814,4 @@ Código livre para uso educacional e comercial com atribuição.
 - Esquematicos: [INSERIR LINK AQUI]
 - Diagramas adicionais: [INSERIR LINK AQUI]
 
-**Desenvolvido com ❤️ para aprendizado em microcontroladores**
+**Desenvolvido para aprendizado em microcontroladores**
